@@ -1,0 +1,31 @@
+services:
+  toolbox:
+    build:
+      context: .
+      args:
+        FLAVOR: full # "slim" skips LibreOffice, Pandoc and ffmpeg (much smaller image)
+        EXTRAS: "" # e.g. "--extra bedrock --extra transcribe --extra remove-bg"
+    image: toolbox:latest
+    ports:
+      - "127.0.0.1:8080:8080" # change to "8080:8080" for LAN access
+    volumes:
+      - ./data:/data # jobs, saved pipelines, downloaded AI models
+      - ./inbox:/inbox # watch folder: drop files in /inbox/<pipeline-id>/ (see README)
+    environment:
+      TOOLBOX_MAX_UPLOAD_MB: 500
+      TOOLBOX_JOB_TTL_MIN: 60
+      TOOLBOX_WORKERS: 2
+      TOOLBOX_WATCH_DIR: /inbox
+      # --- optional AI tools (summarize / translate / ask a document) -----------------
+      # Nothing is sent anywhere unless you configure a provider. Examples:
+      #   Local Ollama:  PROVIDER=openai  BASE_URL=http://host.docker.internal:11434/v1  MODEL=llama3.1
+      #   OpenAI:        PROVIDER=openai  API_KEY=sk-...  MODEL=gpt-4o-mini
+      #   AWS Bedrock:   PROVIDER=bedrock REGION=us-east-1 MODEL=<model or inference-profile id>
+      #                  (needs the bedrock extra and AWS credentials in the container)
+      # TOOLBOX_LLM_PROVIDER: openai
+      # TOOLBOX_LLM_MODEL: llama3.1
+      # TOOLBOX_LLM_BASE_URL: http://host.docker.internal:11434/v1
+      # TOOLBOX_LLM_API_KEY: ""
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

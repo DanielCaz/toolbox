@@ -1,0 +1,52 @@
+[project]
+name = "toolbox"
+version = "0.1.0"
+description = "Self-hosted toolbox of everyday file utilities"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "python-multipart>=0.0.9",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "typer>=0.12",
+  "pypdf>=4.3",
+  "pillow>=10.4",
+  "pillow-heif>=0.18",
+  "python-magic>=0.4.27",
+  "ocrmypdf>=16.4",
+  "pytesseract>=0.3.13",
+  "pymupdf>=1.28.2",
+  "cryptography>=50.0.2",
+  "openpyxl>=3.1.5",
+  "pdfplumber>=0.11.10",
+  "py7zr>=1.1.3",
+  "zxing-cpp>=3.1.1",
+  "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+# Heavy, optional tools. Without these installed the tools simply hide themselves.
+transcribe = ["faster-whisper>=1.0"]
+bedrock = ["boto3>=1.34"]
+remove-bg = ["rembg>=2.0", "onnxruntime>=1.18"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6", "reportlab>=4"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.File", "fastapi.Form", "typer.Argument", "typer.Option"]
+
+[tool.uv]
+package = false
