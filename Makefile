@@ -4,7 +4,7 @@ dev-api: ## Backend with autoreload on :8080
 	cd backend && uv run uvicorn app.main:app --reload --port 8080
 
 dev-web: ## Vite dev server (proxies /api to :8080)
-	cd frontend && npm run dev
+	cd frontend && bun run dev
 
 test: ## Backend tests
 	cd backend && uv run pytest -q

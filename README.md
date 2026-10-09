@@ -12,16 +12,16 @@ This implements phases 0 to 6 of the implementation plan.
 37 server tools plus the in-browser ones. A tool whose binary or package is missing shows as unavailable
 instead of crashing the app; `/api/health` lists what is missing.
 
-| Category | Tool ids |
-| --- | --- |
-| PDF | `pdf.merge` `pdf.split` `pdf.rotate` `pdf.compress` `pdf.extract_pages` `pdf.to_images` `pdf.extract_text` `pdf.watermark` `pdf.page_numbers` `pdf.protect` `pdf.unlock` `pdf.strip_metadata` |
-| Images | `image.convert` (incl. HEIC) `image.resize` `image.compress` `image.crop_rotate` `image.strip_exif` `image.to_pdf` `image.favicon` · optional `image.remove_bg` |
-| OCR | `ocr.pdf` (scan to searchable PDF) `ocr.image` `ocr.tables` (PDF tables to spreadsheet) |
-| Documents | `docs.office_to_pdf` (LibreOffice) `docs.markdown` (Pandoc: md/html/docx/odt/epub/rst/latex/pdf) `docs.tabular` (csv/tsv/xlsx/json/jsonl) |
-| Files | `files.archive` (create/extract zip, tar.gz, 7z) |
-| QR | `qr.read` (QR codes and barcodes from images) |
-| Audio & video | `media.convert` `media.extract_audio` `media.trim` `media.compress_video` `media.to_gif` · optional `media.transcribe` (Whisper) |
-| AI | `ai.summarize` `ai.translate` `ai.ask` (need a provider, see below) |
+| Category       | Tool ids                                                                                                                                                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PDF            | `pdf.merge` `pdf.split` `pdf.rotate` `pdf.compress` `pdf.extract_pages` `pdf.to_images` `pdf.extract_text` `pdf.watermark` `pdf.page_numbers` `pdf.protect` `pdf.unlock` `pdf.strip_metadata`                                |
+| Images         | `image.convert` (incl. HEIC) `image.resize` `image.compress` `image.crop_rotate` `image.strip_exif` `image.to_pdf` `image.favicon` · optional `image.remove_bg`                                                              |
+| OCR            | `ocr.pdf` (scan to searchable PDF) `ocr.image` `ocr.tables` (PDF tables to spreadsheet)                                                                                                                                      |
+| Documents      | `docs.office_to_pdf` (LibreOffice) `docs.markdown` (Pandoc: md/html/docx/odt/epub/rst/latex/pdf) `docs.tabular` (csv/tsv/xlsx/json/jsonl)                                                                                    |
+| Files          | `files.archive` (create/extract zip, tar.gz, 7z)                                                                                                                                                                             |
+| QR             | `qr.read` (QR codes and barcodes from images)                                                                                                                                                                                |
+| Audio & video  | `media.convert` `media.extract_audio` `media.trim` `media.compress_video` `media.to_gif` · optional `media.transcribe` (Whisper)                                                                                             |
+| AI             | `ai.summarize` `ai.translate` `ai.ask` (need a provider, see below)                                                                                                                                                          |
 | In the browser | Base64, URL encode, JSON/YAML, regex tester, diff, case converter, line tools, text stats, HTML entities, UUID, password generator, hashes, JWT decode, timestamps, cron explainer, color converter, URL parts, QR generator |
 
 Most single-file tools are **batch** tools: give them ten files and you get ten results.
@@ -51,7 +51,9 @@ docker compose up -d --build
 
 ### Local development
 
-You need Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 22+, and the binaries you want to use:
+You need Python 3.12+, [uv](https://docs.astral.sh/uv/), Bun 1.4.2+, and the binaries you want to use:
+
+Before the first run, install frontend dependencies with `cd frontend && bun install --frozen-lockfile`.
 
 ```bash
 # macOS:  brew install tesseract ghostscript qpdf libmagic pandoc ffmpeg ; brew install --cask libreoffice
@@ -61,11 +63,11 @@ You need Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 22+, and the binar
 make dev-api     # terminal 1: FastAPI with autoreload on :8080
 make dev-web     # terminal 2: Vite on :5173, proxies /api to :8080
 make test        # backend tests
-cd frontend && npm test
+cd frontend && bun run test
 ```
 
 To serve the built UI from FastAPI without Docker:
-`cd frontend && npm ci && npm run build && cp -r dist ../backend/static`, then `make dev-api`.
+`cd frontend && bun install --frozen-lockfile && bun run build && cp -r dist ../backend/static`, then `make dev-api`.
 
 The UI is an installable app (PWA) and its shell opens offline, where the in-browser tools keep working.
 Server tools always need the server.
@@ -117,10 +119,10 @@ ignored. Without the server: `uv run python cli.py watch ./inbox`.
 document's text (for `ai.ask`, the relevant passages) to that provider.** With a local model server such as
 Ollama nothing leaves your machine; with a hosted provider it does.
 
-| Provider | Settings |
-| --- | --- |
-| Local / any OpenAI-compatible API (Ollama, LM Studio, vLLM, OpenAI, OpenRouter) | `TOOLBOX_LLM_PROVIDER=openai`, `TOOLBOX_LLM_MODEL=...`, `TOOLBOX_LLM_BASE_URL=http://host.docker.internal:11434/v1`, `TOOLBOX_LLM_API_KEY=...` (blank is fine locally) |
-| AWS Bedrock | `TOOLBOX_LLM_PROVIDER=bedrock`, `TOOLBOX_LLM_MODEL=<model or inference-profile id>`, `TOOLBOX_LLM_REGION=us-east-1`, AWS credentials in the environment, and `--extra bedrock` |
+| Provider                                                                        | Settings                                                                                                                                                                       |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Local / any OpenAI-compatible API (Ollama, LM Studio, vLLM, OpenAI, OpenRouter) | `TOOLBOX_LLM_PROVIDER=openai`, `TOOLBOX_LLM_MODEL=...`, `TOOLBOX_LLM_BASE_URL=http://host.docker.internal:11434/v1`, `TOOLBOX_LLM_API_KEY=...` (blank is fine locally)         |
+| AWS Bedrock                                                                     | `TOOLBOX_LLM_PROVIDER=bedrock`, `TOOLBOX_LLM_MODEL=<model or inference-profile id>`, `TOOLBOX_LLM_REGION=us-east-1`, AWS credentials in the environment, and `--extra bedrock` |
 
 Long documents are summarized in parts; `ai.ask` sends the whole document up to about 60,000 characters and
 only the best-matching excerpts beyond that (keyword ranking, no embeddings). Documents over 600,000
@@ -160,20 +162,20 @@ curl -O localhost:8080/api/jobs/<job_id>/zip
 curl -X POST localhost:8080/api/jobs/<job_id>/cancel
 ```
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/api/health` | Liveness and what is missing |
-| GET | `/api/tools` | Catalog with JSON Schema for each tool's params |
-| POST | `/api/tools/{id}/run` | Multipart `files` + `params` JSON, returns `202 {job_id}` |
-| GET | `/api/jobs/{id}` | Status (`queued/running/done/failed/cancelled`), progress, outputs, text, error |
-| POST | `/api/jobs/{id}/cancel` | Stop a queued or running job |
-| GET | `/api/jobs/{id}/files/{name}` | Download one output |
-| GET | `/api/jobs/{id}/zip` | Download all outputs |
-| DELETE | `/api/jobs/{id}` | Clean up early |
-| GET/POST | `/api/pipelines` | List / create saved pipelines |
-| GET/PUT/DELETE | `/api/pipelines/{id}` | Read / update / delete one |
-| POST | `/api/pipelines/{id}/run` | Run a saved pipeline on uploaded `files` |
-| POST | `/api/pipelines/run` | Run an unsaved pipeline: `files` + `steps` JSON list |
+| Method         | Path                          | Purpose                                                                         |
+| -------------- | ----------------------------- | ------------------------------------------------------------------------------- |
+| GET            | `/api/health`                 | Liveness and what is missing                                                    |
+| GET            | `/api/tools`                  | Catalog with JSON Schema for each tool's params                                 |
+| POST           | `/api/tools/{id}/run`         | Multipart `files` + `params` JSON, returns `202 {job_id}`                       |
+| GET            | `/api/jobs/{id}`              | Status (`queued/running/done/failed/cancelled`), progress, outputs, text, error |
+| POST           | `/api/jobs/{id}/cancel`       | Stop a queued or running job                                                    |
+| GET            | `/api/jobs/{id}/files/{name}` | Download one output                                                             |
+| GET            | `/api/jobs/{id}/zip`          | Download all outputs                                                            |
+| DELETE         | `/api/jobs/{id}`              | Clean up early                                                                  |
+| GET/POST       | `/api/pipelines`              | List / create saved pipelines                                                   |
+| GET/PUT/DELETE | `/api/pipelines/{id}`         | Read / update / delete one                                                      |
+| POST           | `/api/pipelines/{id}/run`     | Run a saved pipeline on uploaded `files`                                        |
+| POST           | `/api/pipelines/run`          | Run an unsaved pipeline: `files` + `steps` JSON list                            |
 
 Errors always look like `{"error": {"code", "message", "detail"}}` with codes `validation_error` (422),
 `unsupported_file` (415), `too_large` (413), `tool_unavailable` (503), `unknown_tool` (404), `not_found` (404).

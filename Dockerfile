@@ -1,10 +1,10 @@
 # --- frontend build ---
-FROM node:22-slim AS web
+FROM oven/bun:1.4.2 AS web
 WORKDIR /web
-COPY frontend/package*.json ./
-RUN npm ci
+COPY frontend/package.json frontend/bun.lock ./
+RUN bun install --frozen-lockfile
 COPY frontend/ .
-RUN npm run build
+RUN bun run build
 
 # --- runtime ---
 FROM python:3.12-slim
@@ -12,14 +12,14 @@ FROM python:3.12-slim
 # FLAVOR=slim keeps PDF / image / OCR tools; tools whose binaries are missing hide themselves.
 ARG FLAVOR=full
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      tesseract-ocr tesseract-ocr-eng tesseract-ocr-spa \
-      ghostscript qpdf unpaper pngquant \
-      libmagic1 libheif1 \
+    tesseract-ocr tesseract-ocr-eng tesseract-ocr-spa \
+    ghostscript qpdf unpaper pngquant \
+    libmagic1 libheif1 \
     && if [ "$FLAVOR" = "full" ]; then \
-         apt-get install -y --no-install-recommends \
-           libreoffice-writer libreoffice-calc libreoffice-impress \
-           pandoc ffmpeg fonts-liberation fonts-dejavu-core; \
-       fi \
+    apt-get install -y --no-install-recommends \
+    libreoffice-writer libreoffice-calc libreoffice-impress \
+    pandoc ffmpeg fonts-liberation fonts-dejavu-core; \
+    fi \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
